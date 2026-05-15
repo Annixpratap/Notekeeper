@@ -60,9 +60,8 @@ export class SearchService {
 
     // Escape query for safety
     const escapedQuery = this.escapeQuery(query);
-    const searchPattern = `%${escapedQuery}%`;
 
-    // Search across title and content
+    // Search across title and content using contains (case-insensitive)
     const results = await prisma.note.findMany({
       where: {
         AND: [
@@ -80,8 +79,8 @@ export class SearchService {
           },
           {
             OR: [
-              { title: { ilike: searchPattern } },
-              { content: { ilike: searchPattern } },
+              { title: { contains: escapedQuery, mode: 'insensitive' } },
+              { content: { contains: escapedQuery, mode: 'insensitive' } },
             ],
           },
         ],
@@ -162,7 +161,6 @@ export class SearchService {
 
     // Escape query for safety
     const escapedQuery = this.escapeQuery(query);
-    const searchPattern = `%${escapedQuery}%`;
 
     // Count total results
     const total = await prisma.note.count({
@@ -182,8 +180,8 @@ export class SearchService {
           },
           {
             OR: [
-              { title: { ilike: searchPattern } },
-              { content: { ilike: searchPattern } },
+              { title: { contains: escapedQuery, mode: 'insensitive' } },
+              { content: { contains: escapedQuery, mode: 'insensitive' } },
             ],
           },
         ],
@@ -208,8 +206,8 @@ export class SearchService {
           },
           {
             OR: [
-              { title: { ilike: searchPattern } },
-              { content: { ilike: searchPattern } },
+              { title: { contains: escapedQuery, mode: 'insensitive' } },
+              { content: { contains: escapedQuery, mode: 'insensitive' } },
             ],
           },
         ],

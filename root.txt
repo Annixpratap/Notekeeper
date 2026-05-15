@@ -1,0 +1,265 @@
+Here's a comprehensive, exam-ready prompt you can paste directly into a new Claude conversation (or any capable AI coding assistant) to generate the full project:
+
+---
+
+## 🚀 Master Prompt — Notes App (Node.js Backend + React Frontend)
+
+```
+You are a senior full-stack engineer. Build a production-grade, fully functional Notes App — a multi-user backend REST API (Node.js/Express) with a beautiful React frontend. This is for a technical assessment; every requirement must be met perfectly.
+
+---
+
+## TECH STACK
+
+**Backend:** Node.js, Express.js, PostgreSQL (via Prisma ORM), JWT authentication, bcrypt, Zod validation, swagger-ui-express for OpenAPI docs.
+
+**Frontend:** React (Vite), Tailwind CSS, Axios, React Router v6, React Query, Framer Motion.
+
+**Deploy targets:** Backend → Render.com (free tier), Frontend → Vercel or Render static site.
+
+---
+
+## BACKEND — Full API Specification
+
+### Project structure:
+```
+/backend
+  /src
+    /routes         → auth.routes.js, notes.routes.js
+    /controllers    → auth.controller.js, notes.controller.js
+    /middleware     → auth.middleware.js, validate.middleware.js
+    /schemas        → zod schemas for all request bodies
+    /prisma         → schema.prisma
+    app.js
+    server.js
+  .env.example
+  Dockerfile
+  package.json
+```
+
+### Prisma schema:
+```prisma
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  notes     Note[]   @relation("owner")
+  sharedNotes NoteShare[]
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text
+  isPinned  Boolean  @default(false)
+  color     String   @default("#ffffff")
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  owner     User     @relation("owner", fields: [ownerId], references: [id])
+  ownerId   String
+  shares    NoteShare[]
+}
+
+model NoteShare {
+  id        String   @id @default(uuid())
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  noteId    String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  sharedAt  DateTime @default(now())
+  @@unique([noteId, userId])
+}
+```
+
+### Implement ALL endpoints exactly:
+
+**POST /register** — hash password with bcrypt (salt 12), return 201 + `{ message: "User registered successfully" }`
+
+**POST /login** — verify password, return JWT (24h expiry) as `{ access_token: "..." }`, 401 on failure with `{ message: "Invalid email or password" }`
+
+**GET /notes** — auth required. Return all notes owned by user + notes shared with user (marked with `"shared": true`). Support:
+  - `?page=1&limit=10` pagination (return `{ data: [...], total, page, totalPages }`)
+  - `?q=keyword` full-text search across title + content
+
+**GET /notes/:id** — auth required. Return note if owned by user OR shared with user. 403 otherwise.
+
+**POST /notes** — auth required. Body: `{ title, content, color?, tags?, isPinned? }`. Return 201 + note.
+
+**PUT /notes/:id** — auth required. Only owner can update. Supports partial updates. Return 200 + updated note.
+
+**DELETE /notes/:id** — auth required. Only owner can delete. Return 204.
+
+**POST /notes/:id/share** — auth required. Body: `{ share_with_email }`. Share note with that user. 404 if user not found, 400 if already shared, 403 if not owner.
+
+**GET /search?q=keyword** — auth required. Full-text search on title + content. Returns matching notes (owned + shared).
+
+**GET /openapi.json** — return full OpenAPI 3.0 spec JSON covering all endpoints above.
+
+**GET /about** — return:
+```json
+{
+  "name": "Your Name",
+  "email": "your@email.com",
+  "my_features": {
+    "Note Metadata (Color, Tags, Pin)": "Each note supports a hex color, string tags array, and a pinnable flag. Inspired by Google Keep and Notion, this lets users organize notes visually without needing folders. Chosen because flat organization with metadata scales better for quick capture workflows.",
+    "Full-text Search": "GET /search?q= searches title and content using Postgres ILIKE. Chosen because notes are useless without retrieval — this is the core value prop of any notes app.",
+    "Pagination": "GET /notes supports ?page and ?limit. Chosen to prevent payload bloat as note count grows — essential for production readiness.",
+    "Note Sharing": "POST /notes/:id/share allows multi-user collaboration. Shared notes appear in the recipient's GET /notes list with a 'shared: true' flag."
+  }
+}
+```
+
+### Middleware:
+- `auth.middleware.js`: verify JWT from `Authorization: Bearer <token>`. Attach `req.user = { id, email }`. Return 401 if missing/invalid.
+- Global error handler returning `{ message: "..." }` in all error cases.
+- CORS enabled for all origins (or specify frontend URL).
+- Rate limiting: 100 req/15min per IP using `express-rate-limit`.
+
+---
+
+## ⭐ SPECIAL FEATURE — Notion-style Rich Block Editor (The "wow" feature)
+
+This is the key differentiator. Implement a **Block-based note body** inspired by Notion.
+
+### Backend additions:
+Add a `blocks` JSON field to the Note model:
+```prisma
+blocks Json? // stores array of block objects
+```
+
+A block object looks like:
+```json
+{ "id": "uuid", "type": "text|heading1|heading2|bullet|todo|code|divider|quote", "content": "string", "checked": false }
+```
+
+The `content` field stores plain text content. When `blocks` is present, it takes precedence over `content` for rendering; `content` is auto-generated as the plain-text concatenation of all blocks (for search indexing).
+
+**PUT /notes/:id** accepts `blocks` array in body. When saving, also generate and store `content` as the joined plain text.
+
+### Frontend implementation:
+Build a `/notes/:id` editor page with a Notion-style block editor:
+- Each block is a `contenteditable` div or controlled textarea
+- Pressing **Enter** creates a new block below
+- Pressing **Backspace** on empty block deletes it and merges focus upward
+- **/** command menu: type `/` to open a floating popover showing block type options (Text, Heading 1, Heading 2, Bullet, Todo, Code, Divider, Quote). Click to convert current block.
+- Drag handles on hover (⠿ icon) for reordering blocks via drag-and-drop
+- Todo blocks render with a checkbox; checking it crosses out the text
+- Code blocks render in monospace with a light background
+- Auto-save every 2 seconds after last keystroke (debounced)
+- Show "Saved ✓" / "Saving..." status indicator
+
+This feature is worth emphasizing because it transforms a plain CRUD notes app into a structured knowledge tool — exactly what distinguishes Notion from Google Docs.
+
+---
+
+## FRONTEND — Full React Application
+
+### Project structure:
+```
+/frontend
+  /src
+    /pages          → Login.jsx, Register.jsx, Dashboard.jsx, NoteEditor.jsx
+    /components     → NoteCard.jsx, Sidebar.jsx, BlockEditor.jsx, CommandMenu.jsx, ShareModal.jsx, TagBadge.jsx
+    /hooks          → useAuth.js, useNotes.js
+    /api            → axios instance with interceptors
+    /store          → auth context
+  App.jsx
+  main.jsx
+```
+
+### Pages:
+
+**Login / Register pages:**
+- Split-screen design. Left: animated brand panel with app name "Noteflow" and a tagline. Right: clean auth form.
+- Switch between login/register with smooth transition.
+- Show inline validation errors.
+
+**Dashboard (/):**
+- Sidebar: user avatar/email, "New Note" button, tag filter list, logout.
+- Main area: masonry grid of NoteCard components.
+- Search bar at top: debounced, hits GET /search?q=.
+- NoteCards show: title, content preview (truncated), color as card background, tags as chips, pin icon (filled if pinned), shared badge if shared_with_me.
+- Pinned notes appear at top in their own row.
+- Click card → navigate to /notes/:id editor.
+- Right-click or ⋮ menu on card: Edit, Share, Delete, Pin/Unpin, Change Color (color picker with 8 presets).
+- Empty state illustration + "Create your first note" CTA.
+
+**Note Editor (/notes/:id and /notes/new):**
+- Full-page editor.
+- Editable title at top (large, bold).
+- Block editor below (the special Notion-style feature).
+- Top bar: Back button, Share button (opens modal), color picker, tags input (comma-separated → tag chips), pin toggle, delete button.
+- Auto-save indicator.
+- Share modal: email input + "Share" button, list of already-shared users with option to remove.
+
+### Design System:
+- **Aesthetic:** Editorial / refined dark theme. Charcoal backgrounds (#0f0f0f, #1a1a1a), warm off-white text (#f0ede6), accent in warm amber (#e8a045). Think a high-end editorial magazine gone digital.
+- **Typography:** `"Playfair Display"` for headings/title, `"DM Mono"` for UI labels and code, `"Lora"` for body/note content. Load from Google Fonts.
+- **Components:** Rounded-md cards with subtle border (1px solid #2a2a2a), soft box-shadow. Hover states with gentle lift (translateY -2px) and glow.
+- **Animations:** Framer Motion — staggered card entry on dashboard load, smooth page transitions, block editor block insert/delete animations.
+- **Color picker:** 8 preset note colors: warm white, soft yellow, sage green, dusty pink, sky blue, lavender, coral, mint. Rendered as circular swatches.
+- Fully responsive down to 375px mobile width.
+
+---
+
+## DEPLOYMENT
+
+### Backend (Render.com):
+- Provide `render.yaml`:
+```yaml
+services:
+  - type: web
+    name: notes-api
+    env: node
+    buildCommand: "npm install && npx prisma migrate deploy && npx prisma generate"
+    startCommand: "node src/server.js"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NODE_ENV
+        value: production
+```
+- Provide a `Dockerfile` for optional containerized deploy.
+
+### Frontend (Vercel):
+- `VITE_API_BASE_URL` env variable pointing to deployed backend URL.
+- Provide `vercel.json` with SPA rewrite rule.
+
+---
+
+## ADDITIONAL REQUIREMENTS
+
+1. **Input validation:** Use Zod on all request bodies. Return 400 with field-level errors `{ errors: [{ field, message }] }` on validation failure.
+2. **Security:** Passwords never returned in any response. JWT secret from env var only.
+3. **Error consistency:** All errors return `{ message: "..." }`. All successes return the spec-exact shape.
+4. **.env.example** file listing: `DATABASE_URL`, `JWT_SECRET`, `PORT`, `CORS_ORIGIN`.
+5. **README.md** with: project description, local setup steps, all API endpoints table, deployment guide, feature explanations.
+6. **Seed script** (`npm run seed`): creates 2 test users and 5 sample notes for demo purposes.
+7. All timestamps in ISO 8601 format.
+8. Note responses always include: `id, title, content, blocks, color, tags, isPinned, createdAt, updatedAt, shared (bool)`.
+
+---
+
+Generate the complete, working code for every file described above. Do not omit any file. Each file should be production-ready, not a skeleton.
+```
+
+---
+
+## Why This Prompt Gets Full Marks
+
+| Requirement | What's Covered |
+|---|---|
+| All 9 API endpoints | Exactly spec-compliant responses, status codes, and error shapes |
+| JWT Auth | Middleware on all protected routes |
+| Special feature | Notion-style **block editor** — far beyond a simple CRUD addition |
+| Stretch goals | Pagination, full-text search, Docker — all included |
+| OpenAPI JSON | Full spec at `/openapi.json` |
+| `/about` endpoint | Pre-filled with feature descriptions |
+| Great visual design | Editorial dark theme, Playfair + DM Mono + Lora fonts, Framer Motion |
+| Deployment | `render.yaml` + `vercel.json` + `Dockerfile` all included |
+
+The **block editor** is the key differentiator — it's the exact feature that makes Notion special, it shows product thinking, and it requires non-trivial frontend + backend coordination (block storage as JSON, content indexing for search, keyboard UX). That's what will stand out to reviewers.
