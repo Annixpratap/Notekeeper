@@ -30,8 +30,8 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   // Custom application errors
-  if (err.status) {
-    return res.status(err.status).json({
+  if (err.status || err.statusCode) {
+    return res.status(err.status || err.statusCode).json({
       message: err.message,
       timestamp,
       path,
