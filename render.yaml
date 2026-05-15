@@ -3,8 +3,9 @@ services:
     name: notes-app-backend
     runtime: node
     plan: free
-    buildCommand: cd backend && npm install && npx prisma migrate deploy && npx prisma generate
-    startCommand: cd backend && node src/server.js
+    rootDir: backend
+    buildCommand: npm install && npx prisma migrate deploy && npx prisma generate
+    startCommand: node src/server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,6 +20,17 @@ services:
       - key: CORS_ORIGIN
         value: https://notekeeper-1-x6wo.onrender.com
       - key: API_URL
+        value: https://notekeeper-7bn4.onrender.com
+
+  - type: web
+    name: notes-app-frontend
+    runtime: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    envVars:
+      - key: VITE_API_URL
         value: https://notekeeper-7bn4.onrender.com
 
 databases:
