@@ -80,8 +80,6 @@ export class SearchService {
           },
           {
             OR: [
-              { title: { search: escapedQuery } },
-              { content: { search: escapedQuery } },
               { title: { ilike: searchPattern } },
               { content: { ilike: searchPattern } },
             ],
