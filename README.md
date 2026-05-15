@@ -1,6 +1,10 @@
 # Notes App - Full Stack Application
 
 A production-ready full-stack notes application with Notion-style block editor, real-time search, and note sharing capabilities. Built with Express.js backend and React frontend.
+<img width="1919" height="856" alt="image" src="https://github.com/user-attachments/assets/c992e529-592d-41de-8d67-82209fc56a66" />
+
+<img width="1848" height="859" alt="image" src="https://github.com/user-attachments/assets/f08e6901-32cc-4e9e-9762-41eee5c268ee" />
+
 
 ## 🎯 Project Overview
 
