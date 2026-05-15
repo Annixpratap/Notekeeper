@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  
+  notes      Note[]
+  sharedWith NoteShare[] @relation("recipient")
+  sharedBy   NoteShare[] @relation("owner")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @default("")
+  blocks    Json     @default("[]")
+  color     String   @default("#ffffff")
+  tags      String[] @default([])
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  sharedWith NoteShare[]
+  
+  @@index([ownerId])
+  @@index([createdAt])
+}
+
+model NoteShare {
+  id        String   @id @default(cuid())
+  noteId    String
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation("recipient", fields: [userId], references: [id], onDelete: Cascade)
+  
+  ownerId   String
+  owner     User     @relation("owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  sharedAt  DateTime @default(now())
+  
+  @@unique([noteId, userId])
+  @@index([userId])
+}

@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Lora:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-charcoal text-off-white font-lora;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-playfair;
+  }
+
+  code, pre {
+    @apply font-dm-mono;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-amber text-charcoal rounded-md font-medium hover:bg-opacity-90 transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-transparent border border-off-white text-off-white rounded-md font-medium hover:bg-off-white hover:text-charcoal transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-charcoal border border-gray-700 rounded-lg p-4 shadow-lg hover:shadow-xl transition-all duration-200;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 bg-charcoal border border-gray-700 rounded-md text-off-white placeholder-gray-500 focus:outline-none focus:border-amber transition-colors duration-200;
+  }
+}
