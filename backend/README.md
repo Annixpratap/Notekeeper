@@ -1,6 +1,6 @@
 # Notes App Backend
 
-A production-ready Express.js backend for the Notes App with PostgreSQL, Prisma ORM, JWT authentication, and comprehensive middleware stack.
+A production-ready Express.js backend for the Notes App with PostgreSQL, Prisma ORM, JWT authentication, Notion-style block editor, and comprehensive middleware stack.
 
 ## Project Structure
 
@@ -115,30 +115,51 @@ backend/
 
 ## API Endpoints
 
-### Health Check
+### Health & Documentation
 - `GET /health` - Server health check
-
-### Authentication (to be implemented)
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login
-
-### Notes (to be implemented)
-- `GET /notes` - Get user's notes with pagination
-- `POST /notes` - Create a new note
-- `GET /notes/:id` - Get a specific note
-- `PUT /notes/:id` - Update a note
-- `DELETE /notes/:id` - Delete a note
-
-### Search (to be implemented)
-- `GET /search` - Full-text search across notes
-
-### Sharing (to be implemented)
-- `POST /notes/:id/share` - Share a note with another user
-- `DELETE /notes/:id/share/:userId` - Revoke note sharing
-
-### Documentation (to be implemented)
-- `GET /docs` - Swagger UI documentation
+- `GET /about` - App information with features
 - `GET /openapi.json` - OpenAPI 3.0 specification
+
+### Authentication
+- `POST /register` - User registration (email, password)
+- `POST /login` - User login (returns JWT token)
+
+### Notes (CRUD)
+- `GET /notes` - Get user's notes with pagination (page, limit)
+- `POST /notes` - Create a new note (title, content, blocks)
+- `GET /notes/{id}` - Get a specific note
+- `PUT /notes/{id}` - Update a note (title, content, blocks)
+- `DELETE /notes/{id}` - Delete a note
+
+### Search
+- `GET /search?q=keyword` - Full-text search across notes (case-insensitive)
+
+### Note Sharing
+- `POST /notes/{id}/share` - Share a note with another user (share_with_email)
+
+## Features Implemented
+
+### Core Features (Required)
+✅ User registration with email and password validation
+✅ JWT-based authentication with 24-hour token expiry
+✅ CRUD operations for notes
+✅ Note sharing with other users (read-only access)
+✅ Full-text search across note titles and content
+✅ Pagination support on GET /notes endpoint
+✅ OpenAPI/Swagger documentation
+✅ About endpoint with app information
+
+### Special Feature (Notion-style Block Editor)
+✅ Block-based note structure with JSON storage
+✅ 8 block types: text, heading1, heading2, bullet, todo, code, divider, quote
+✅ Auto-generated plain-text content field for search indexing
+✅ Block metadata (id, type, content, checked status)
+
+### Stretch Goals
+✅ Pagination on GET /notes API
+✅ Full-text search endpoint (GET /search?q=keyword)
+✅ Docker containerization
+✅ Frontend integration (React with Vite)
 
 ## Middleware Stack
 
@@ -259,6 +280,20 @@ model NoteShare {
 }
 ```
 
+## Block Structure
+
+Each block in the `blocks` JSON array has the following structure:
+
+```json
+{
+  "id": "uuid-string",
+  "type": "text|heading1|heading2|bullet|todo|code|divider|quote",
+  "content": "string",
+  "checked": false,
+  "language": "javascript"
+}
+```
+
 ## Validation Schemas
 
 ### Auth Schemas
@@ -316,6 +351,11 @@ npm run test:watch
 
 ## Deployment
 
+### Deployed Backend
+- **URL**: https://notekeeper-7bn4.onrender.com
+- **Platform**: Render.com
+- **Database**: PostgreSQL on Render
+
 ### Environment Variables for Production
 
 ```env
@@ -323,7 +363,7 @@ DATABASE_URL="postgresql://user:password@prod-db:5432/notes_app"
 JWT_SECRET="production-secret-key-min-32-chars"
 PORT=5000
 NODE_ENV="production"
-CORS_ORIGIN="https://yourdomain.com"
+CORS_ORIGIN="https://notekeeper-1-x6wo.onrender.com"
 ```
 
 ### Docker Deployment
@@ -376,6 +416,11 @@ The deployment will automatically:
 - Verify JWT_SECRET is set in .env
 - Check token format: `Authorization: Bearer <token>`
 - Tokens expire after 24 hours
+
+### Search Not Working
+- Ensure notes have content in title or content fields
+- Search is case-insensitive
+- Empty search query returns all user's notes
 
 ## Contributing
 
