@@ -27,11 +27,15 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 errors by redirecting to login
+    // Handle 401 errors by redirecting to login (but not for login/register endpoints)
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const isAuthEndpoint = error.config?.url?.includes('/login') || error.config?.url?.includes('/register');
+      
+      if (!isAuthEndpoint) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
