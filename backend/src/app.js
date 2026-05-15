@@ -25,7 +25,7 @@ export const createApp = () => {
   });
 
   // Routes
-  app.use('/auth', authRoutes);
+  app.use('/', authRoutes);
   app.use('/notes', notesRoutes);
   app.use('/notes/:id/shares', shareRoutes);
   app.use('/search', searchRoutes);
