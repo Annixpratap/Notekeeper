@@ -14,7 +14,7 @@ export function useSearch() {
       const response = await axiosInstance.get('/search', {
         params: { q: query },
       });
-      return response.data;
+      return response.data.data || [];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10,
