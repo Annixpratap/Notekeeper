@@ -23,13 +23,13 @@ export class ShareService {
 
     if (!note) {
       const error = new Error('Note not found');
-      error.statusCode = 404;
+      error.status = 404;
       throw error;
     }
 
     if (note.ownerId !== ownerId) {
       const error = new Error('Access denied');
-      error.statusCode = 403;
+      error.status = 403;
       throw error;
     }
 
@@ -40,14 +40,14 @@ export class ShareService {
 
     if (!recipient) {
       const error = new Error('Recipient not found');
-      error.statusCode = 404;
+      error.status = 404;
       throw error;
     }
 
     // Check if sharing with self
     if (recipient.id === ownerId) {
       const error = new Error('Cannot share note with yourself');
-      error.statusCode = 400;
+      error.status = 400;
       throw error;
     }
 
@@ -63,7 +63,7 @@ export class ShareService {
 
     if (existingShare) {
       const error = new Error('Note already shared with this user');
-      error.statusCode = 409;
+      error.status = 409;
       throw error;
     }
 
@@ -120,13 +120,13 @@ export class ShareService {
 
     if (!note) {
       const error = new Error('Note not found');
-      error.statusCode = 404;
+      error.status = 404;
       throw error;
     }
 
     if (note.ownerId !== ownerId) {
       const error = new Error('Access denied');
-      error.statusCode = 403;
+      error.status = 403;
       throw error;
     }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import BlockEditor from '../components/BlockEditor';
@@ -16,6 +16,7 @@ export default function NoteEditor() {
   const updateNoteMutation = useUpdateNote();
   const deleteNoteMutation = useDeleteNote();
   const { save: autoSave, isSaving } = useAutoSave(noteId);
+  const titleRef = useRef(null);
 
   const [title, setTitle] = useState('');
   const [blocks, setBlocks] = useState([]);
@@ -23,21 +24,30 @@ export default function NoteEditor() {
   const [tags, setTags] = useState([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize from note data
   useEffect(() => {
-    if (note) {
+    if (note && !isInitialized) {
       setTitle(note.title || '');
       setBlocks(note.blocks || []);
       setColor(note.color || '#ffffff');
       setTags(note.tags || []);
+      setIsInitialized(true);
+      
+      // Set the title in the ref
+      if (titleRef.current) {
+        titleRef.current.textContent = note.title || '';
+      }
     }
-  }, [note]);
+  }, [note?.id, isInitialized]);
 
   const handleTitleChange = (e) => {
-    const newTitle = e.currentTarget.textContent;
+    const newTitle = e.currentTarget.textContent || '';
     setTitle(newTitle);
-    autoSave({ title: newTitle });
+    if (newTitle.trim()) {
+      autoSave({ title: newTitle });
+    }
   };
 
   const handleBlocksChange = (newBlocks) => {
@@ -106,9 +116,9 @@ export default function NoteEditor() {
   }
 
   return (
-    <div className="min-h-screen bg-charcoal text-off-white">
-      {/* Header */}
-      <div className="border-b border-gray-800 p-4 md:p-6 flex items-center justify-between">
+    <div className="min-h-screen bg-charcoal text-off-white flex flex-col">
+      {/* Header - sticky */}
+      <div className="sticky top-0 z-40 border-b border-gray-800 p-4 md:p-6 flex items-center justify-between bg-charcoal">
         <motion.button
           onClick={() => navigate('/dashboard')}
           className="text-off-white hover:text-amber transition-colors flex items-center gap-2"
@@ -152,51 +162,53 @@ export default function NoteEditor() {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="max-w-4xl mx-auto p-4 md:p-8">
-        {/* Title */}
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={handleTitleChange}
-            className="text-4xl md:text-5xl font-playfair font-bold text-off-white focus:outline-none focus:ring-2 focus:ring-amber rounded px-2 py-1"
+      {/* Main content - scrolls as one unit */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto p-4 md:p-8">
+          {/* Title */}
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            {title}
-          </div>
-        </motion.div>
+            <div
+              ref={titleRef}
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={handleTitleChange}
+              className="text-4xl md:text-5xl font-playfair font-bold text-off-white focus:outline-none focus:ring-2 focus:ring-amber rounded px-2 py-1 outline-none min-h-[1.2em]"
+              style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+            />
+          </motion.div>
 
-        {/* Block Editor */}
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <BlockEditor
-            blocks={blocks}
-            onChange={handleBlocksChange}
-            onSave={handleBlocksChange}
-          />
-        </motion.div>
+          {/* Block Editor - seamless, all content visible */}
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <BlockEditor
+              blocks={blocks}
+              onChange={handleBlocksChange}
+              onSave={handleBlocksChange}
+            />
+          </motion.div>
 
-        {/* Toolbar */}
-        <motion.div
-          className="flex flex-wrap gap-4 p-4 bg-gray-900 rounded-lg border border-gray-800"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <ColorPicker currentColor={color} onChange={handleColorChange} />
-          <div className="flex-1 min-w-[200px]">
-            <TagInput tags={tags} onChange={handleTagsChange} />
-          </div>
-        </motion.div>
+          {/* Toolbar */}
+          <motion.div
+            className="flex flex-wrap gap-4 p-4 bg-gray-900 rounded-lg border border-gray-800"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <ColorPicker currentColor={color} onChange={handleColorChange} />
+            <div className="flex-1 min-w-[200px]">
+              <TagInput tags={tags} onChange={handleTagsChange} />
+            </div>
+          </motion.div>
+        </div>
       </div>
 
       {/* Share Modal */}

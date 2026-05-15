@@ -22,7 +22,7 @@ export function useNoteById(noteId) {
     queryKey: ['notes', noteId],
     queryFn: async () => {
       const response = await axiosInstance.get(`/notes/${noteId}`);
-      return response.data;
+      return response.data.data;
     },
     enabled: !!noteId,
     staleTime: 1000 * 60 * 5,
@@ -36,7 +36,7 @@ export function useCreateNote() {
   return useMutation({
     mutationFn: async (noteData) => {
       const response = await axiosInstance.post('/notes', noteData);
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notesQueryKey });
@@ -50,7 +50,7 @@ export function useUpdateNote() {
   return useMutation({
     mutationFn: async ({ noteId, data }) => {
       const response = await axiosInstance.put(`/notes/${noteId}`, data);
-      return response.data;
+      return response.data.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: notesQueryKey });

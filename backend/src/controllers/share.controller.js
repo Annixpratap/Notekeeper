@@ -48,7 +48,7 @@ export const getShareInfo = async (req, res, next) => {
     const isOwner = await ShareService.isOwner(userId, noteId);
     if (!isOwner) {
       const error = new Error('Access denied');
-      error.statusCode = 403;
+      error.status = 403;
       throw error;
     }
 

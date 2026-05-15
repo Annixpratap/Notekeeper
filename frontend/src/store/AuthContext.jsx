@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     try {
-      const response = await axiosInstance.post('/login', { email, password });
+      const response = await axiosInstance.post('/auth/login', { email, password });
       const { access_token, user: userData } = response.data;
 
       setToken(access_token);
@@ -42,7 +42,15 @@ export const AuthProvider = ({ children }) => {
 
   const register = useCallback(async (email, password) => {
     try {
-      await axiosInstance.post('/register', { email, password });
+      const response = await axiosInstance.post('/auth/register', { email, password });
+      const { access_token, user: userData } = response.data;
+
+      setToken(access_token);
+      setUser(userData);
+
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
+
       return { success: true };
     } catch (error) {
       return {

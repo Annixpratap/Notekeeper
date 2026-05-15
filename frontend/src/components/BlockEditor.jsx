@@ -10,12 +10,24 @@ export default function BlockEditor({ blocks = [], onChange, onSave }) {
   const [activeBlockId, setActiveBlockId] = useState(null);
   const blockRefsRef = useRef({});
 
+  // Auto-expand textareas
+  const autoExpandTextarea = (textarea) => {
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 500) + 'px';
+    }
+  };
+
   const handleBlockChange = (blockId, content) => {
     const updatedBlocks = blocks.map((b) =>
       b.id === blockId ? { ...b, content } : b
     );
     onChange(updatedBlocks);
-    onSave?.(updatedBlocks);
+    
+    // Auto-expand textarea
+    setTimeout(() => {
+      autoExpandTextarea(blockRefsRef.current[blockId]);
+    }, 0);
   };
 
   const handleBlockTypeChange = (blockId, newType) => {
@@ -151,7 +163,7 @@ export default function BlockEditor({ blocks = [], onChange, onSave }) {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-0">
       <AnimatePresence>
         {blocks.map((block, idx) => (
           <motion.div
@@ -160,14 +172,14 @@ export default function BlockEditor({ blocks = [], onChange, onSave }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="group flex items-start gap-2"
+            className="group flex items-start gap-2 py-1"
             draggable
             onDragStart={(e) => handleDragStart(e, block.id)}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, block.id)}
           >
             {/* Drag handle */}
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity pt-2 text-gray-600 cursor-grab active:cursor-grabbing">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity pt-2 text-gray-600 cursor-grab active:cursor-grabbing text-sm">
               ⠿
             </div>
 
@@ -189,17 +201,20 @@ export default function BlockEditor({ blocks = [], onChange, onSave }) {
 
               <textarea
                 ref={(el) => {
-                  if (el) blockRefsRef.current[block.id] = el;
+                  if (el) {
+                    blockRefsRef.current[block.id] = el;
+                    autoExpandTextarea(el);
+                  }
                 }}
                 value={block.content}
                 onChange={(e) => handleBlockChange(block.id, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, block.id, idx)}
                 onFocus={() => setActiveBlockId(block.id)}
                 placeholder={getBlockPlaceholder(block.type)}
-                className={`w-full bg-transparent text-off-white placeholder-gray-600 focus:outline-none resize-none ${getBlockStyles(
+                className={`w-full bg-transparent text-off-white placeholder-gray-600 focus:outline-none resize-none overflow-hidden ${getBlockStyles(
                   block.type
                 )}`}
-                rows={block.type === 'code' ? 4 : 1}
+                rows={1}
               />
 
               {/* Command menu */}
@@ -214,7 +229,7 @@ export default function BlockEditor({ blocks = [], onChange, onSave }) {
             {/* Delete button */}
             <button
               onClick={() => handleDeleteBlock(block.id)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 pt-2"
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 pt-2 text-sm"
               title="Delete block"
             >
               ✕
@@ -223,15 +238,17 @@ export default function BlockEditor({ blocks = [], onChange, onSave }) {
         ))}
       </AnimatePresence>
 
-      {/* Add block button */}
-      <motion.button
-        onClick={handleAddBlock}
-        className="text-gray-600 hover:text-amber transition-colors text-sm py-2"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        + Add block
-      </motion.button>
+      {/* Add block button - only show if no blocks or as hint */}
+      {blocks.length === 0 && (
+        <motion.button
+          onClick={handleAddBlock}
+          className="text-gray-600 hover:text-amber transition-colors text-sm py-2"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          + Add block
+        </motion.button>
+      )}
     </div>
   );
 }
